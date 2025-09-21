@@ -11,6 +11,9 @@ module Bot
     end
 
     def add_user_if_missing(user_id)
+
+      return if user_id.nil?
+
       rows = CSV.read(USERS_CSV, headers: true)
       if rows.any? { |row| row["user_id"] == user_id.to_s }
         update_last_start(user_id)

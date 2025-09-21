@@ -22,12 +22,17 @@ module Bot
     # bucket: :rec or :bus for tracking
     def send_message(bot, chat_id, text, track: false, bucket: :rec, suppress_delete: false, **kwargs)
       delete_previous_message(bot, chat_id) unless suppress_delete
-      msg = bot.api.send_message(
-        chat_id: chat_id,
-        text:    text,
-        reply_markup: (::KEYBOARD rescue nil),
-        **kwargs
-      )
+      begin
+        msg = bot.api.send_message(
+          chat_id: chat_id,
+          text:    text,
+          reply_markup: (::KEYBOARD rescue nil),
+          **kwargs
+        )
+      rescue Telegram::Bot::Exceptions::ResponseError => e
+        warn "[send_message error] #{e.class}: #{e.message} (chat_id: #{chat_id})"
+        return nil
+      end
       key = Util.chid(chat_id)
       @last_bot_msg[key] = msg.message_id unless suppress_delete
       if track

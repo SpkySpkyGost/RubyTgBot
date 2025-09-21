@@ -121,7 +121,12 @@ def main
       # Regular messages
       next unless update.is_a?(Telegram::Bot::Types::Message)
       message = update
-      Bot::CSVStore.add_user_if_missing(message.from.id)
+      puts message.inspect
+      user_id = message.from&.id
+      next unless user_id
+
+      Bot::CSVStore.add_user_if_missing(user_id)
+
 
       raw_text = (message.text || "").strip
       text     = raw_text.downcase

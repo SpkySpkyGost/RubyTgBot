@@ -90,7 +90,7 @@ module Bot
         q[:t]    = to
         full_url = q.empty? ? base_url : "#{base_url}?#{URI.encode_www_form(q)}"
 
-        puts full_url
+        #puts full_url
         Bot::Messaging.send_message(bot, chat_id, full_url, disable_web_page_preview: true, track: true, bucket: :bus)
 
         begin

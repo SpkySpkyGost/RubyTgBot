@@ -13,4 +13,4 @@ gem "fiddle"
 gem "rufus-scheduler"
 gem 'nokogiri'
 # Windows needs full TZ database for "Europe/Prague" etc.
-gem "tzinfo-data", platforms: [:mingw, :x64_mingw, :mswin]
+gem "tzinfo-data", platforms: [:windows]

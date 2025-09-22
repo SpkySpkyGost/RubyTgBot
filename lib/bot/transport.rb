@@ -13,9 +13,17 @@ module Bot
       BUS_FLOW[chat_id][:data] = {}
     end
 
-    def start_bus_flow(chat_id)
-      BUS_FLOW[chat_id][:step] = :ground_zero
+    def start_bus_flow(bot, chat_id)
+      BUS_FLOW[chat_id][:step] = :ask_from
       BUS_FLOW[chat_id][:data] = {}
+      # First prompt for 'from'
+      Bot::Messaging.send_message(
+        bot, chat_id,
+        "🚌 Where do we start? (start location)",
+        track: true,
+        bucket: :bus
+      )
+      handle_bus_flow_input(bot, chat_id)
     end
 
     def handle_bus_flow_input(bot, message)
@@ -24,34 +32,41 @@ module Bot
       text    = (message.text || "").strip
 
       case state[:step]
-      when :ground_zero
-        Messaging.send_message(bot, chat_id, "Running transport search script...", track: true, bucket: :bus)
-        state[:step] = :ask_from
-        Messaging.send_message(bot, chat_id, "From where? (start stop)", track: true, bucket: :bus)
-        return true
-
       when :ask_from
-        state[:data][:from] = text
-        state[:step] = :ask_to
-        Bot::Messaging.send_message(bot, chat_id, "To where? (destination stop)", track: true, bucket: :bus)
-        return true
-
-      when :ask_to
-        state[:data][:to] = text
-        state[:step] = :ask_date
-        Bot::Messaging.send_message(bot, chat_id, "Date? (DD.MM.YYYY) — or send `today` / leave blank", track: true, bucket: :bus)
-        return true
-
-      when :ask_date
-        date = text.empty? || text.downcase == "today" ? nil : text
-        unless date.nil? || date =~ /^\d{2}\.\d{2}\.\d{4}$/
-          Bot::Messaging.send_message(bot, chat_id, "Use DD.MM.YYYY (e.g. 11.08.2025) or `today`.", track: true, bucket: :bus)
+        if state[:data][:from].nil?
+          state[:data][:from] = :waiting # mark as waiting for next input
+          return true
+        else
+          # Now store the actual user input
+          state[:data][:from] = text
+          state[:step] = :ask_to
+          state[:data][:to] = nil
+          Bot::Messaging.send_message(bot, chat_id, "To where? (destination stop)", track: true, bucket: :bus)
           return true
         end
-        state[:data][:date] = date
-        state[:step] = :ask_time
-        Bot::Messaging.send_message(bot, chat_id, "Time? (HH:MM) — or send `now` / leave blank", track: true, bucket: :bus)
-        return true
+
+      when :ask_to
+        if state[:data][:to].nil?
+          state[:data][:to] = text
+          state[:step] = :ask_date
+          state[:data][:date] = nil
+          Bot::Messaging.send_message(bot, chat_id, "Date? (DD.MM.YYYY) — or send `today` / leave blank", track: true, bucket: :bus)
+          return true
+        end
+
+      when :ask_date
+        if state[:data][:date].nil?
+          date = text.empty? || text.downcase == "today" ? nil : text
+          unless date.nil? || date =~ /^\d{2}\.\d{2}\.\d{4}$/
+            Bot::Messaging.send_message(bot, chat_id, "Use DD.MM.YYYY (e.g. 11.08.2025) or `today`.", track: true, bucket: :bus)
+            return true
+          end
+          state[:data][:date] = date
+          state[:step] = :ask_time
+          state[:data][:time] = nil
+          Bot::Messaging.send_message(bot, chat_id, "Time? (HH:MM) — or send `now` / leave blank", track: true, bucket: :bus)
+          return true
+        end
 
       when :ask_time
         time = text.empty? || text.downcase == "now" ? nil : text
@@ -61,10 +76,11 @@ module Bot
         end
         state[:data][:time] = time
 
+        # Build the query
         from = state[:data][:from]
         to   = state[:data][:to]
-        date = state[:data][:date] # can be nil
-        time = state[:data][:time] # can be nil
+        date = state[:data][:date]
+        time = state[:data][:time]
 
         base_url = "https://idos.cz/vlakyautobusymhdvse/spojeni/vysledky/"
         q = {}
@@ -74,6 +90,7 @@ module Bot
         q[:t]    = to
         full_url = q.empty? ? base_url : "#{base_url}?#{URI.encode_www_form(q)}"
 
+        puts full_url
         Bot::Messaging.send_message(bot, chat_id, full_url, disable_web_page_preview: true, track: true, bucket: :bus)
 
         begin
@@ -118,6 +135,7 @@ module Bot
         false
       end
     end
+
 
     # NEW: add missing UI + clear handlers used by callbacks
     def send_transport_clear_button(bot, chat_id)

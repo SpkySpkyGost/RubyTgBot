@@ -62,7 +62,7 @@ module Config
   }.freeze
 
   # --- Music API ---
-  SPOTIFY_MY_PLAYLIST_URL = "https://open.spotify.com/playlist/1s58D9CvnK7gOje0lKa1Fj?si=b8b2e6974074400c"
+  SPOTIFY_MY_PLAYLIST_URL = "https://open.spotify.com/playlist/1s58D9CvnK7gOje0lKa1Fj"
   API_side_link_music = "https://api.reccobeats.com/v1/track/recommendation"
   SPOTIFY_FILE = File.join(DATA_DIR, "playlist_tracks.json")
   MUSIC_FILE = File.join(DATA_DIR, "free_beats_music.json")

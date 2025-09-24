@@ -99,15 +99,6 @@ def main
               warn "[listen] Failed to answer callback: #{e.class} - #{e.message}"
             end
 
-            begin
-              bot.api.edit_message_text(
-                chat_id: chat_id,
-                message_id: update.message.message_id,
-                text: "Recommender messages cleared ✅"
-              )
-            rescue Telegram::Bot::Exceptions::ResponseError
-            end
-
           elsif update.data == "bus_clear"
             chat_id = update.message.chat.id
             Bot::Transport.clear_transport_messages(bot, chat_id)
@@ -115,15 +106,6 @@ def main
               bot.api.answer_callback_query(callback_query_id: update.id, text: "Cleared ✅")
             rescue Telegram::Bot::Exceptions::ResponseError => e
               warn "[listen] Failed to answer callback: #{e.class} - #{e.message}"
-            end
-
-            begin
-              bot.api.edit_message_text(
-                chat_id: chat_id,
-                message_id: update.message.message_id,
-                text: "Transport messages cleared ✅"
-              )
-            rescue Telegram::Bot::Exceptions::ResponseError
             end
           end
           next

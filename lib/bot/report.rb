@@ -27,6 +27,11 @@ module Bot
                      rescue => e
                        "No Spotify data (#{e.class})"
                      end
+      extra_spotify_line = begin
+                             MusicHelpers.random_spotify_song
+                           rescue => e
+                             "No Spotify data (#{e.class})"
+                           end
 
       news_lines = begin
                      News.summary_lines(limit: Config::NEWS_COUNT)
@@ -58,7 +63,8 @@ module Bot
           "#{news_block}\n\n" \
           "<b>🎵 Today’s music picks:</b>\n" \
           "From our music list: <i>#{Util.html_escape(music_line)}</i>\n" \
-          "From Spotify charts: <i>#{Util.html_escape(spotify_line)}</i>\n\n" \
+          "From Spotify playlist: <i>#{Util.html_escape(spotify_line)}</i>\n\n" \
+          "Another Spotify pick: <i>#{Util.html_escape(extra_spotify_line)}</i>\n\n" \
           "Stay strong 💪"
 
       body
